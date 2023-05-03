@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Login.css';
 import axios from 'axios';
 import PAGES from '../../Static/Pages';
 import { Link } from "react-router-dom";
 import { useCookies } from 'react-cookie';
 
-function Login({ currentPage, setCurrentPage, setUser, token, setToken }) {
+function Login({ navigate }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [cookies, setCookies] = useCookies(['username', 'userId', 'jwt']);
+  const [invalidLogin, setInvalidLogin] = useState(false);
+  const [goToFeed, setGoToFeed] = useState(false);
 
   const handleUsernameChange = (event) => {
     setUsername(event.target.value);
@@ -29,13 +31,22 @@ function Login({ currentPage, setCurrentPage, setUser, token, setToken }) {
       const getUser = await axios.get(`https://localhost:7227/api/Users/username/${username}`);
       setCookies('userId', getUser.data.id, { path: '/' })
       setCookies('jwt', getToken.data.token, { path: '/' });
+      setGoToFeed(true);
+      navigate('/feed');
 
     } catch (error) {
       console.error(error.message);
+      setInvalidLogin(true)
     }
     event.preventDefault();
     // TODO: handle form submission
   };
+
+  function invalidLoginMessage() {
+    if (invalidLogin) {
+      return <p>Invalid username or password</p>
+    }
+  }
 
   return (
     <div className="login-container">
@@ -57,9 +68,8 @@ function Login({ currentPage, setCurrentPage, setUser, token, setToken }) {
           value={password}
           onChange={handlePasswordChange}
         />
-        <Link to="/feed">
-          <button onClick={handleSubmit}>Login</button>
-        </Link>
+        <button onClick={handleSubmit}>Login</button>
+        {invalidLoginMessage()}
       </div>
     </div>
   );
